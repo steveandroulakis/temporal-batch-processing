@@ -30,4 +30,8 @@ public interface BatchActivities {
   List<String> processBatch(List<String> batch);
 
   String processRecord(String record);
+
+  int countCharactersInRecord(String record);
+
+  boolean isRecordLengthPrime(int characterCount);
 }

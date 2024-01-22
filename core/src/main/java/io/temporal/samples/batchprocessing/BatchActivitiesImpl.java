@@ -21,6 +21,7 @@ package io.temporal.samples.batchprocessing;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ public class BatchActivitiesImpl implements BatchActivities {
   public List<String> createSingleBatch(int batchSize, int readUntilLine, int offset) {
     FileWordReader fileWordReader = new FileWordReader();
     List<String> records =
-        fileWordReader.readWordsFromFile("words_alpha.txt", readUntilLine, offset);
+            fileWordReader.readWordsFromFile("words_alpha.txt", readUntilLine, offset);
 
     if (offset > readUntilLine || records.isEmpty()) {
       return new ArrayList<>(); // Return an empty list if offset is beyond readUntilLine or no
@@ -39,11 +40,11 @@ public class BatchActivitiesImpl implements BatchActivities {
     }
 
     int start =
-        0; // Start from the first record (offset is already considered in readWordsFromFile)
+            0; // Start from the first record (offset is already considered in readWordsFromFile)
     int end =
-        Math.min(
-            batchSize,
-            records.size()); // Ensure not to exceed the batchSize and the size of records
+            Math.min(
+                    batchSize,
+                    records.size()); // Ensure not to exceed the batchSize and the size of records
     log.info("Creating a batch of size {}", end - start);
 
     return new ArrayList<>(records.subList(start, end));
@@ -90,5 +91,36 @@ public class BatchActivitiesImpl implements BatchActivities {
       e.printStackTrace();
     }
     return record.toUpperCase();
+  }
+
+  public int countCharactersInRecord(String record) {
+    log.info("Counting chars in record {}", record);
+    // turn record into uppercase
+    // sleep for 10ms
+    try {
+      int delayMs = 10;
+
+      // 20% chance of delayMs being 1000ms
+      if (Math.random() < 0.05) {
+        delayMs = 1000;
+      }
+
+      Thread.sleep(delayMs);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    return record.length();
+  }
+
+  public boolean isRecordLengthPrime(int n) {
+    if (n <= 1) {
+      return false;
+    }
+    for (int i=2; i<n; i++) {
+      if (n % i == 0) {
+        return false;
+      }
+    }
+    return true;
   }
 }

@@ -36,7 +36,7 @@ wait
 Start an execution (the `arg` parameter is the number of records to process):
 
 ```bash
-# process 20000 records (warning: takes 15+ minutes to finish executing)
+# process 200000 records (warning: takes 15+ minutes to finish executing)
 ./gradlew -q execute -PmainClass=io.temporal.samples.batchprocessing.Caller -Parg=200000
 ```
 
