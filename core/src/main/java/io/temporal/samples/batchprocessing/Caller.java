@@ -33,7 +33,7 @@ public class Caller {
 
     // Workflow execution code
 
-    WorkflowClient client = TemporalClient.get(8078);
+    WorkflowClient client = TemporalClient.get(8076);
     final String TASK_QUEUE = ServerInfo.getTaskqueue();
 
     // get java timestamp
