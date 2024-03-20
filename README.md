@@ -27,8 +27,9 @@ Start a worker:
 
 Heck, run a whole bunch of workers (you'll need a bunch to keep [sync match rate](https://community.temporal.io/t/suggested-metrics-to-autoscale-temporal-workers-on/5870/3) high): 
 ```bash
-for i in {1..10}; do 
-    ./gradlew -q execute -PmainClass=io.temporal.samples.batchprocessing.Worker < /dev/null > "temporal_batch_output_$i.txt" 2>&1 &
+# -Parg is the metrics port number to listen on
+for i in {8085..8100}; do 
+    ./gradlew -q execute -PmainClass=io.temporal.samples.batchprocessing.Worker -Parg=$i < /dev/null > "temporal_batch_output_$i.txt" 2>&1 &
 done
 wait
 ```
@@ -63,3 +64,28 @@ Start an execution (the `arg` parameter is the number of records to process):
     WorkerOptions options =
         WorkerOptions.newBuilder().setMaxTaskQueueActivitiesPerSecond(150).build();
 ```
+
+## metrics
+
+Raw notes
+
+https://claude.ai/chat/b3eb476e-8a36-48c6-a979-b64dae8a54a2
+prometheus in ~/Download
+runs on 9090
+
+Scraping
+8078
+8085 8099
+
+grafana in downloads bin/grafana server
+http://localhost:3000/
+password admin lga
+
+sdk java github dashboard didn't work immediately
+needed to go to each dashboard hit 'builder' then run queries
+
+exported result to ~/Downloads fixed
+
+## worker tuning
+
+TODO

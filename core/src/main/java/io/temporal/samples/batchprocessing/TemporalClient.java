@@ -21,6 +21,7 @@ package io.temporal.samples.batchprocessing;
 
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowClientOptions;
+import io.temporal.samples.batchprocessing.metrics.MetricsUtils;
 import io.temporal.samples.batchprocessing.web.ServerInfo;
 import io.temporal.serviceclient.SimpleSslContextBuilder;
 import io.temporal.serviceclient.WorkflowServiceStubs;
@@ -29,9 +30,20 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import javax.net.ssl.SSLException;
+import com.sun.net.httpserver.HttpServer;
+import com.uber.m3.tally.RootScopeBuilder;
+import com.uber.m3.tally.Scope;
+import com.uber.m3.util.ImmutableMap;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.temporal.client.WorkflowClient;
+import io.temporal.client.WorkflowOptions;
+import io.temporal.common.reporter.MicrometerClientStatsReporter;
+import io.temporal.serviceclient.WorkflowServiceStubs;
+import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 
 public class TemporalClient {
-  public static WorkflowServiceStubs getWorkflowServiceStubs()
+  public static WorkflowServiceStubs getWorkflowServiceStubs(int metricsPort)
       throws FileNotFoundException, SSLException {
     WorkflowServiceStubsOptions.Builder workflowServiceStubsOptionsBuilder =
         WorkflowServiceStubsOptions.newBuilder();
@@ -49,7 +61,19 @@ public class TemporalClient {
     String targetEndpoint = ServerInfo.getAddress();
     // Your registered namespace.
 
-    workflowServiceStubsOptionsBuilder.setTarget(targetEndpoint);
+    PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+    // Set up a new scope, report every 1 second
+    Scope scope =
+            new RootScopeBuilder()
+                    .reporter(new MicrometerClientStatsReporter(registry))
+                    .reportEvery(com.uber.m3.util.Duration.ofSeconds(1));
+    // Start the prometheus scrape endpoint for starter metrics
+    HttpServer scrapeEndpoint = MetricsUtils.startPrometheusScrapeEndpoint(registry, metricsPort);
+    // Stopping the starter will stop the http server that exposes the
+    // scrape endpoint.
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> scrapeEndpoint.stop(1)));
+
+    workflowServiceStubsOptionsBuilder.setTarget(targetEndpoint).setMetricsScope(scope).build();;
     WorkflowServiceStubs service = null;
 
     if (!ServerInfo.getAddress().equals("localhost:7233")) {
@@ -62,13 +86,13 @@ public class TemporalClient {
     return service;
   }
 
-  public static WorkflowClient get() throws FileNotFoundException, SSLException {
+  public static WorkflowClient get(int metricsPort) throws FileNotFoundException, SSLException {
     // TODO support local server
     // Get worker to poll the common task queue.
     // gRPC stubs wrapper that talks to the local docker instance of temporal service.
     // WorkflowServiceStubs service = WorkflowServiceStubs.newLocalServiceStubs();
 
-    WorkflowServiceStubs service = getWorkflowServiceStubs();
+    WorkflowServiceStubs service = getWorkflowServiceStubs(metricsPort);
 
     WorkflowClientOptions.Builder builder = WorkflowClientOptions.newBuilder();
 
@@ -77,6 +101,9 @@ public class TemporalClient {
 
     // client that can be used to start and signal workflows
     WorkflowClient client = WorkflowClient.newInstance(service, clientOptions);
+
+    System.out.println("Metrics are available at http://localhost:" + metricsPort + "/metrics");
+
     return client;
   }
 }
