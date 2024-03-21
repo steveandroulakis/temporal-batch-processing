@@ -30,4 +30,6 @@ public interface BatchActivities {
   List<String> processBatch(List<String> batch);
 
   String processRecord(String record);
+
+  boolean startStressingCPU();
 }

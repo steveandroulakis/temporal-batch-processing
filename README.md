@@ -73,6 +73,14 @@ https://claude.ai/chat/b3eb476e-8a36-48c6-a979-b64dae8a54a2
 prometheus in ~/Download
 runs on 9090
 
+prometheus.yml
+```yaml
+    static_configs:
+      - targets: ["localhost:8076","localhost:8085","localhost:8086","localhost:8087","localhost:8088","localhost:8089",
+      "localhost:8090","localhost:8091","localhost:8092","localhost:8093","localhost:8094","localhost:8095",
+      "localhost:8096","localhost:8097","localhost:8098","localhost:8099"]
+```
+
 Scraping
 8078
 8085 8099
@@ -83,8 +91,8 @@ password admin lga
 
 sdk java github dashboard didn't work immediately
 needed to go to each dashboard hit 'builder' then run queries
-
 exported result to ~/Downloads fixed
+Schedule to start latencies are called "Activity Task Backlog By Activity Type" in dashboard
 
 ## worker tuning
 

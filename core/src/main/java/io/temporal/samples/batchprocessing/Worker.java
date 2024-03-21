@@ -35,7 +35,13 @@ public class Worker {
     // set activities per second across *all* workers
     // prevents resource exhausted errors
     WorkerOptions options =
-        WorkerOptions.newBuilder().setMaxTaskQueueActivitiesPerSecond(150).build();
+        WorkerOptions.newBuilder()
+                .setMaxTaskQueueActivitiesPerSecond(2000) // will increase activity_schedule_to_start_latency
+                .setMaxConcurrentWorkflowTaskExecutionSize(10)
+                .setMaxConcurrentWorkflowTaskPollers(2)
+                .setMaxConcurrentActivityExecutionSize(10)
+                .setMaxConcurrentActivityTaskPollers(2)
+                .build();
 
     // worker factory that can be used to create workers for specific task queues
     WorkerFactory factory = WorkerFactory.newInstance(TemporalClient.get(metricsPort));
