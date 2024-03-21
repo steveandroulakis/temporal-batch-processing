@@ -21,6 +21,7 @@ package io.temporal.samples.batchprocessing;
 
 import io.temporal.samples.batchprocessing.web.ServerInfo;
 import io.temporal.worker.WorkerFactory;
+import io.temporal.worker.WorkerFactoryOptions;
 import io.temporal.worker.WorkerOptions;
 
 public class Worker {
@@ -41,10 +42,15 @@ public class Worker {
                 .setMaxConcurrentWorkflowTaskPollers(2)
                 .setMaxConcurrentActivityExecutionSize(10)
                 .setMaxConcurrentActivityTaskPollers(2)
+//                .setMaxWorkerActivitiesPerSecond(10)
                 .build();
 
+    WorkerFactoryOptions factoryOptions = WorkerFactoryOptions.newBuilder()
+//            .setMaxWorkflowThreadCount(10) // Set the maximum number of threads
+            .build();
+
     // worker factory that can be used to create workers for specific task queues
-    WorkerFactory factory = WorkerFactory.newInstance(TemporalClient.get(metricsPort));
+    WorkerFactory factory = WorkerFactory.newInstance(TemporalClient.get(metricsPort), factoryOptions);
     io.temporal.worker.Worker workerForCommonTaskQueue = factory.newWorker(TASK_QUEUE, options);
     workerForCommonTaskQueue.registerWorkflowImplementationTypes(
         BatchParentWorkflowImpl.class, BatchChildWorkflowImpl.class);
