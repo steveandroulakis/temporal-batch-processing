@@ -66,6 +66,7 @@ Start an execution (the `arg` parameter is the number of records to process):
 ```
 
 ## metrics
+See 'Worker Tuning Experiment' google doc for more details
 
 Raw notes
 

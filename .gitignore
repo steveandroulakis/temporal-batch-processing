@@ -16,3 +16,4 @@ target
 .settings/
 bin/
 temporal_batch_output*
+.local/

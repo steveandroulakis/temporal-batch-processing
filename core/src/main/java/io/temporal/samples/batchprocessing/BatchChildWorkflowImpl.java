@@ -1,6 +1,7 @@
 package io.temporal.samples.batchprocessing;
 
 import io.temporal.activity.ActivityOptions;
+import io.temporal.failure.ApplicationFailure;
 import io.temporal.workflow.Async;
 import io.temporal.workflow.Promise;
 import io.temporal.workflow.Workflow;
