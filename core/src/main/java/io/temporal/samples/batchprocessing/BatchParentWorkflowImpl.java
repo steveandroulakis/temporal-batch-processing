@@ -20,7 +20,9 @@
 package io.temporal.samples.batchprocessing;
 
 import io.temporal.activity.ActivityOptions;
+import io.temporal.client.WorkflowOptions;
 import io.temporal.workflow.Async;
+import io.temporal.workflow.ChildWorkflowOptions;
 import io.temporal.workflow.Promise;
 import io.temporal.workflow.Workflow;
 import java.time.Duration;
@@ -69,8 +71,20 @@ public class BatchParentWorkflowImpl implements BatchParentWorkflow {
         activeWorkflows.removeIf(Promise::isCompleted);
       }
 
+      // get parent workflow Id and get the number section at the end
+      String parentWorkflowId = String.valueOf(Workflow.getInfo().getWorkflowId());
+      String[] parentWorkflowIdParts = parentWorkflowId.split("-");
+      String parentWorkflowIdNum = parentWorkflowIdParts[parentWorkflowIdParts.length - 1];
+
+      ChildWorkflowOptions childWorkflowOptions = ChildWorkflowOptions.newBuilder()
+              // Set the Workflow Id to parent workflow's Workflow Id
+              .setWorkflowId(parentWorkflowIdNum + "-" + currentOffset)
+              .build();
+
       // Process the batch in a child workflow
-      BatchChildWorkflow childWorkflow = Workflow.newChildWorkflowStub(BatchChildWorkflow.class);
+      BatchChildWorkflow childWorkflow = Workflow.newChildWorkflowStub(BatchChildWorkflow.class,
+              childWorkflowOptions);
+
       Promise<Void> workflowExecution = Async.procedure(childWorkflow::processBatch, batch);
       activeWorkflows.add(workflowExecution);
       processedWorkflows++;
