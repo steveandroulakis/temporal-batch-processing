@@ -30,7 +30,7 @@ public class BatchChildWorkflowImpl implements BatchChildWorkflow {
     // wait for all records to be processed
     Promise.allOf(processRecordPromises).get();
 
-    // random number between 0 and 100
+    // chance of workflow failure
     int random = Workflow.sideEffect(Integer.class, () -> (int) (Math.random() * 100));
     if (random < 50) {
         throw ApplicationFailure.newNonRetryableFailure("fail", "IntentionalFailure");
