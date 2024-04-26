@@ -19,11 +19,19 @@
 
 package io.temporal.samples.batchprocessing;
 
+import io.temporal.workflow.QueryMethod;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
+
+import java.util.List;
+import java.util.Map;
 
 @WorkflowInterface
 public interface BatchParentWorkflow {
   @WorkflowMethod
   void processRecords(BatchParentWorkflowParams params);
+
+  // query to get childWorkflowStatus
+  @QueryMethod
+  List<Map<String, BatchParentWorkflowImpl.BatchStatus>> getStatus();
 }

@@ -44,16 +44,16 @@ public class BatchActivitiesImpl implements BatchActivities {
         Math.min(
             batchSize,
             records.size()); // Ensure not to exceed the batchSize and the size of records
-    log.info("Creating a batch of size {}", end - start);
+    //log.info("Creating a batch of size {}", end - start);
 
     return new ArrayList<>(records.subList(start, end));
   }
 
   @Override
   public List<String> processBatch(List<String> batch) {
-    log.info("Processing batch of size {}", batch.size());
+    //log.info("Processing batch of size {}", batch.size());
     for (String record : batch) {
-      log.info("Processing record {}", record);
+      //log.info("Processing record {}", record);
       // turn record into uppercase
       // sleep for 10ms
       try {
@@ -74,7 +74,7 @@ public class BatchActivitiesImpl implements BatchActivities {
   }
 
   public String processRecord(String record) {
-    log.info("Processing record {}", record);
+    //log.info("Processing record {}", record);
     // turn record into uppercase
     // sleep for 10ms
     try {

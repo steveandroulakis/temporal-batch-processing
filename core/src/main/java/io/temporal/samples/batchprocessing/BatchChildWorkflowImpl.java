@@ -1,6 +1,8 @@
 package io.temporal.samples.batchprocessing;
 
 import io.temporal.activity.ActivityOptions;
+import io.temporal.api.failure.v1.ApplicationFailureInfoOrBuilder;
+import io.temporal.failure.ApplicationFailure;
 import io.temporal.workflow.Async;
 import io.temporal.workflow.Promise;
 import io.temporal.workflow.Workflow;
@@ -27,5 +29,12 @@ public class BatchChildWorkflowImpl implements BatchChildWorkflow {
 
     // wait for all records to be processed
     Promise.allOf(processRecordPromises).get();
+
+    // random number between 0 and 100
+    int random = Workflow.sideEffect(Integer.class, () -> (int) (Math.random() * 100));
+    if (random < 50) {
+        throw ApplicationFailure.newNonRetryableFailure("fail", "IntentionalFailure");
+    }
+
   }
 }
