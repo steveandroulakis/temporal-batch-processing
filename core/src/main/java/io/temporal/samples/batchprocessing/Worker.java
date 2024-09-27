@@ -27,6 +27,7 @@ public class Worker {
 
   @SuppressWarnings("CatchAndPrintStackTrace")
   public static void main(String[] args) throws Exception {
+    int metricsPort = args.length > 0 ? Integer.parseInt(args[0]) : 8085;
 
     final String TASK_QUEUE = ServerInfo.getTaskqueue();
 
@@ -36,7 +37,7 @@ public class Worker {
         WorkerOptions.newBuilder().setMaxTaskQueueActivitiesPerSecond(150).build();
 
     // worker factory that can be used to create workers for specific task queues
-    WorkerFactory factory = WorkerFactory.newInstance(TemporalClient.get());
+    WorkerFactory factory = WorkerFactory.newInstance(TemporalClient.get(metricsPort));
     io.temporal.worker.Worker workerForCommonTaskQueue = factory.newWorker(TASK_QUEUE, options);
     workerForCommonTaskQueue.registerWorkflowImplementationTypes(
         BatchParentWorkflowImpl.class, BatchChildWorkflowImpl.class);
@@ -46,5 +47,6 @@ public class Worker {
     // Start all workers created by this factory.
     factory.start();
     System.out.println("Worker started for task queue: " + "BatchParentWorkflowTaskQueue");
+    System.out.println("Metrics available at: http://localhost:" + metricsPort + "/metrics");
   }
 }

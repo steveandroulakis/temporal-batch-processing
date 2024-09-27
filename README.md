@@ -22,16 +22,20 @@ TEMPORAL_KEY_PATH="/path/to/file.key"
 Start a worker:
 
 ```bash
-./gradlew -q execute -PmainClass=io.temporal.samples.batchprocessing.Worker
+./gradlew -q execute -PmainClass=io.temporal.samples.batchprocessing.Worker -Parg=8085
 ```
 
 Heck, run a whole bunch of workers (you'll need a bunch to keep [sync match rate](https://community.temporal.io/t/suggested-metrics-to-autoscale-temporal-workers-on/5870/3) high): 
 ```bash
-for i in {1..10}; do 
-    ./gradlew -q execute -PmainClass=io.temporal.samples.batchprocessing.Worker < /dev/null > "temporal_batch_output_$i.txt" 2>&1 &
+# -Parg is the metrics port number to listen on
+# mkdir output first!
+for i in {8085..8100}; do 
+    ./gradlew -q execute -PmainClass=io.temporal.samples.batchprocessing.Worker -Parg=$i < /dev/null > "output/temporal_batch_output_$i.txt" 2>&1 &
 done
 wait
 ```
+
+`killall java` to stop all workers and callers.
 
 Start an execution (the `arg` parameter is the number of records to process):
 
@@ -39,6 +43,36 @@ Start an execution (the `arg` parameter is the number of records to process):
 # process 20000 records (warning: takes 15+ minutes to finish executing)
 ./gradlew -q execute -PmainClass=io.temporal.samples.batchprocessing.Caller -Parg=200000
 ```
+
+## Set up SDK Metrics
+
+Download Prometheus.
+
+Create a `prometheus.yml` file in the Prometheus directory with the following:
+
+```yaml
+global:
+  scrape_interval: 1s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 1s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: 'temporal-workers'
+    static_configs:
+      - targets: [
+          "localhost:8076", "localhost:8085", "localhost:8086", "localhost:8087", "localhost:8088", 
+          "localhost:8089", "localhost:8090", "localhost:8091", "localhost:8092", "localhost:8093", 
+          "localhost:8094", "localhost:8095", "localhost:8096", "localhost:8097", "localhost:8098", 
+          "localhost:8099", "localhost:8100"
+        ]
+```
+
+Run Prometheus:
+
+```bash
+./prometheus --config.file=prometheus.yml
+```
+
+Open your browser and go to http://localhost:9090 to verify that Prometheus is running and monitoring the Temporal workers on the specified ports.
 
 ## Tweak Configuration
 

@@ -19,64 +19,86 @@
 
 package io.temporal.samples.batchprocessing;
 
+import com.sun.net.httpserver.HttpServer;
+import com.uber.m3.tally.RootScopeBuilder;
+import com.uber.m3.tally.Scope;
+import com.uber.m3.tally.StatsReporter;
+import com.uber.m3.util.ImmutableMap;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.temporal.client.WorkflowClient;
+import io.temporal.client.WorkflowOptions;
+import io.temporal.common.reporter.MicrometerClientStatsReporter;
+import io.temporal.samples.batchprocessing.metrics.MetricsUtils;
+import io.temporal.serviceclient.*;
+
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowClientOptions;
 import io.temporal.samples.batchprocessing.web.ServerInfo;
-import io.temporal.serviceclient.SimpleSslContextBuilder;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.serviceclient.WorkflowServiceStubsOptions;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import javax.net.ssl.SSLException;
 
 public class TemporalClient {
-  public static WorkflowServiceStubs getWorkflowServiceStubs()
-      throws FileNotFoundException, SSLException {
-    WorkflowServiceStubsOptions.Builder workflowServiceStubsOptionsBuilder =
-        WorkflowServiceStubsOptions.newBuilder();
+    public static WorkflowServiceStubs getWorkflowServiceStubs(int metricsPort)
+            throws FileNotFoundException, SSLException {
+        WorkflowServiceStubsOptions.Builder workflowServiceStubsOptionsBuilder =
+                WorkflowServiceStubsOptions.newBuilder();
 
-    if (!ServerInfo.getCertPath().equals("") && !"".equals(ServerInfo.getKeyPath())) {
-      InputStream clientCert = new FileInputStream(ServerInfo.getCertPath());
+        if (!ServerInfo.getCertPath().equals("") && !"".equals(ServerInfo.getKeyPath())) {
+            InputStream clientCert = new FileInputStream(ServerInfo.getCertPath());
 
-      InputStream clientKey = new FileInputStream(ServerInfo.getKeyPath());
+            InputStream clientKey = new FileInputStream(ServerInfo.getKeyPath());
 
-      workflowServiceStubsOptionsBuilder.setSslContext(
-          SimpleSslContextBuilder.forPKCS8(clientCert, clientKey).build());
+            workflowServiceStubsOptionsBuilder.setSslContext(
+                    SimpleSslContextBuilder.forPKCS8(clientCert, clientKey).build());
+        }
+
+        // For temporal cloud this would likely be ${namespace}.tmprl.cloud:7233
+        String targetEndpoint = ServerInfo.getAddress();
+
+        // Set up prometheus registry and stats reported
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        // Set up a new scope, report every 1 second
+        Scope scope =
+                new RootScopeBuilder()
+                        .reporter(new MicrometerClientStatsReporter(registry))
+                        .reportEvery(com.uber.m3.util.Duration.ofSeconds(1));
+
+        // for Prometheus collection, expose a scrape endpoint.
+        HttpServer scrapeEndpoint = MetricsUtils.startPrometheusScrapeEndpoint(registry, metricsPort);
+        // Stopping the worker will stop the http server that exposes the
+        // scrape endpoint.
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> scrapeEndpoint.stop(1)));
+
+        // add metrics scope to WorkflowServiceStub options
+        workflowServiceStubsOptionsBuilder.setMetricsScope(scope);
+
+        workflowServiceStubsOptionsBuilder.setTarget(targetEndpoint);
+        WorkflowServiceStubs service = WorkflowServiceStubs.newServiceStubs(workflowServiceStubsOptionsBuilder.build());
+
+        return service;
     }
 
-    // For temporal cloud this would likely be ${namespace}.tmprl.cloud:7233
-    String targetEndpoint = ServerInfo.getAddress();
-    // Your registered namespace.
+    public static WorkflowClient get(int metricsPort) throws FileNotFoundException, SSLException {
+        // TODO support local server
+        // Get worker to poll the common task queue.
+        // gRPC stubs wrapper that talks to the local docker instance of temporal service.
+        // WorkflowServiceStubs service = WorkflowServiceStubs.newLocalServiceStubs();
 
-    workflowServiceStubsOptionsBuilder.setTarget(targetEndpoint);
-    WorkflowServiceStubs service = null;
+        WorkflowServiceStubs service = getWorkflowServiceStubs(metricsPort);
 
-    if (!ServerInfo.getAddress().equals("localhost:7233")) {
-      // if not local server, then use the workflowServiceStubsOptionsBuilder
-      service = WorkflowServiceStubs.newServiceStubs(workflowServiceStubsOptionsBuilder.build());
-    } else {
-      service = WorkflowServiceStubs.newLocalServiceStubs();
+        WorkflowClientOptions.Builder builder = WorkflowClientOptions.newBuilder();
+
+        System.out.println("<<<<SERVER INFO>>>>:\n " + ServerInfo.getServerInfo());
+        WorkflowClientOptions clientOptions = builder.setNamespace(ServerInfo.getNamespace()).build();
+
+        // client that can be used to start and signal workflows
+        WorkflowClient client = WorkflowClient.newInstance(service, clientOptions);
+        return client;
     }
-
-    return service;
-  }
-
-  public static WorkflowClient get() throws FileNotFoundException, SSLException {
-    // TODO support local server
-    // Get worker to poll the common task queue.
-    // gRPC stubs wrapper that talks to the local docker instance of temporal service.
-    // WorkflowServiceStubs service = WorkflowServiceStubs.newLocalServiceStubs();
-
-    WorkflowServiceStubs service = getWorkflowServiceStubs();
-
-    WorkflowClientOptions.Builder builder = WorkflowClientOptions.newBuilder();
-
-    System.out.println("<<<<SERVER INFO>>>>:\n " + ServerInfo.getServerInfo());
-    WorkflowClientOptions clientOptions = builder.setNamespace(ServerInfo.getNamespace()).build();
-
-    // client that can be used to start and signal workflows
-    WorkflowClient client = WorkflowClient.newInstance(service, clientOptions);
-    return client;
-  }
 }

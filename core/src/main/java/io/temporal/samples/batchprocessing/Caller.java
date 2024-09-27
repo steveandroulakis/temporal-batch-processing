@@ -33,7 +33,7 @@ public class Caller {
 
     // Workflow execution code
 
-    WorkflowClient client = TemporalClient.get();
+    WorkflowClient client = TemporalClient.get(8076);
     final String TASK_QUEUE = ServerInfo.getTaskqueue();
 
     // get java timestamp
@@ -53,6 +53,8 @@ public class Caller {
     WorkflowClient.start(transferWorkflow::processRecords, params);
     System.out.printf("\n\nBatch process requested\n");
 
+    System.out.println("Workflow started, metrics available at: http://localhost:8076/metrics");
+
     return "OK";
   }
 
@@ -65,6 +67,6 @@ public class Caller {
 
     runWorkflow(numWords);
 
-    System.exit(0);
+    // System.exit(0);
   }
 }
