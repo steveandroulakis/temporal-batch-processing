@@ -29,5 +29,7 @@ public interface BatchActivities {
 
   List<String> processBatch(List<String> batch);
 
-  String processRecord(String record);
+  String processRecordAAA(String record);
+
+  String processRecordBBB(String record);
 }

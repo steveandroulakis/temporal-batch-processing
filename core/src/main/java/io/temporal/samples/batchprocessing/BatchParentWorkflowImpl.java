@@ -38,7 +38,7 @@ public class BatchParentWorkflowImpl implements BatchParentWorkflow {
       Workflow.newActivityStub(BatchActivities.class, options);
 
   // process x records in a single batch (parallel activity executions)
-  private static final int BATCH_SIZE = 50;
+  private static final int BATCH_SIZE = 200;
 
   // run up to x child workflows in parallel
   private static final int WINDOW_SIZE = 4;

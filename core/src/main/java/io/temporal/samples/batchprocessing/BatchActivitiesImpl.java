@@ -73,7 +73,26 @@ public class BatchActivitiesImpl implements BatchActivities {
     return batch;
   }
 
-  public String processRecord(String record) {
+  public String processRecordAAA(String record) {
+    log.info("Processing record {}", record);
+    // turn record into uppercase
+    // sleep for 10ms
+    try {
+      int delayMs = 10;
+
+      // 20% chance of delayMs being 1000ms
+      if (Math.random() < 0.05) {
+        delayMs = 1000;
+      }
+
+      Thread.sleep(delayMs);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    return record.toUpperCase();
+  }
+
+  public String processRecordBBB(String record) {
     log.info("Processing record {}", record);
     // turn record into uppercase
     // sleep for 10ms
